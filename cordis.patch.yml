@@ -1,0 +1,9 @@
+# dsh-penguin-playground bundle patch
+#
+# The profile boot merges this patch (a single `insert` of the plugin row)
+# into the composed tree. The CLI (`dsh plugin --profile web add <this>`)
+# reconciles `dsh.profile.bundles` automatically when it sees this
+# `dsh.bundle.patch` declaration.
+- insert:
+    - id: penguin-playground
+      name: 'dsh-penguin-playground'

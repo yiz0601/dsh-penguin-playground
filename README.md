@@ -1,0 +1,268 @@
+# 🐧 企鹅乐园 · dsh-penguin-playground
+
+给 DSH（DeepSeek Harness）Web / Desktop 界面加一只 **2D 巴布亚企鹅（Gentoo）桌宠** 的客户端插件。
+
+> A desktop-pet plugin for the DSH web GUI: a 2D Gentoo penguin drawn in SVG and animated by a
+> spring-joint engine, plus penguin theme tokens, an easter-egg button, a status dock and a
+> settings section. Pure client-side bundle — no build step, no install-time scripts.
+
+---
+
+## 安装
+
+需要一个 DSH profile（Web 或 Desktop 都可以）。**这个仓库里提交的是已经构建好的
+`lib/client.js`，所以安装时不会跑任何构建脚本、也不需要 `allowBuilds` 授权。**
+
+### 方式一：直接从 GitHub 装（推荐，更新最省事）
+
+```sh
+dsh plugin --profile <你的 profile 名> add github:yiz0601/dsh-penguin-playground
+dsh --profile <你的 profile 名>      # 或者重启 DSH Desktop
+```
+
+需要本机装了 `git`（没有的话走方式二）。
+
+### 方式二：用打包好的 tgz
+
+从 [Releases](../../releases/latest) 下载 `dsh-penguin-playground-<版本>.tgz`：
+
+```sh
+dsh plugin --profile <你的 profile 名> add ./dsh-penguin-playground-<版本>.tgz
+dsh --profile <你的 profile 名>
+```
+
+### 先验证再启动
+
+```sh
+dsh --profile <你的 profile 名> --dump-config | findstr penguin
+```
+
+能看到 `# == dsh-penguin-playground` 这一层就说明 bundle patch 已经生效。
+
+---
+
+## 更新
+
+**方式一装的**（git 依赖）：
+
+```sh
+dsh plugin --profile <你的 profile 名> update dsh-penguin-playground
+dsh --profile <你的 profile 名>
+```
+
+`pnpm` 会重新解析到默认分支的最新提交，所以上游 `git push` 之后跑这一条就够。
+
+**方式二装的**：重新下载新的 tgz，再 `add` 一次即可（同名包会直接顶掉旧版本）。
+
+装完刷新页面就能看到；客户端插件走 HMR，通常不用重启应用。
+
+---
+
+## 卸载
+
+```sh
+dsh plugin --profile <你的 profile 名> remove dsh-penguin-playground
+```
+
+---
+
+## 它做什么
+
+**一只正侧面的巴布亚企鹅**（照着实拍照片画的）：
+
+- 眼睛后上方一块椭圆白斑（手工微调到 `cx 56.8 / cy 17.3 / rx 4.4 / ry 7.9 / -29°`）、
+  橘红长喙（喙脊黑线 + 喙基黑带）、粉橘色三趾蹼足、黑背白前胸、长而硬的尾羽、鳍肢前缘一圈白边
+- 全部是矢量 SVG，任意缩放都清晰；**不是贴图，也不是 3D**
+
+**动画**：所有姿态都是一组关节角度，每帧用弹簧把当前值拉向目标值，所以状态切换永远是连续插值、
+还带一点回弹（落地压缩、起身回弹），没有硬切帧：
+
+| 行为 | 说明 |
+|---|---|
+| 发呆 / 散步 | 步态相位由「已走过的距离」驱动，脚不会打滑；身体起伏、头稳住视线 |
+| 打盹 | 头收下来、眼睛闭上、呼吸放慢，过一会儿冒 Z |
+| 肚皮滑行 | 身体压扁、脚往后甩、鳍肢后掠，扬起雪沫 |
+| 叫唤 / 啄地 / 梳羽 / 蹦跳 | 喙张合、声波圈、低头啄地溅雪、跳跃有预蹲与落地缓冲 |
+
+**互动**：
+
+- 鼠标靠近会**看着你**（眼睛先动、头再跟上）；凑得很近盯着看，会把睡着的它叫醒
+- **按住拖到屏幕任意位置**：被拎起来会挣扎（脚乱蹬、身体跟着甩），松手会摔一下再站稳
+- 点一下随机表演动作
+- 转身是平滑翻面（中间「变薄」一下 + 侧倾 + 轻轻一跳）
+
+> 造型是**正侧面**的：`pg-root` 的 transform 顺序里镜像排在姿态旋转之前，
+> 所以朝左时得到的是「整个姿态镜像过去」，而不是「先镜像、再套一遍朝右的角度」。
+> 前倾、翅膀后掠、抬尾这些动作在左右两个朝向下都成立。
+
+**附带的界面小东西**：
+
+- 输入框右侧一个 🐧 彩蛋按钮（点了召唤企鹅跳一下）
+- 输入框下方一条企鹅状态栏（实时状态 + 随机冷知识 + 一颗粒子计数器，**点一下立刻拉一坨**）
+- 设置 → **企鹅乐园**：主题配色开关、桌宠开关、拉屎开关、实时 token / 坨数统计
+
+---
+
+## 💩 弹道学：烧掉的 token 会变成屎
+
+**你烧掉多少 token，它就拉多少。**
+
+### 触发
+
+| 规则 | 数值 |
+|---|---|
+| 每消耗多少 token 拉一坨 | 900 |
+| 两坨之间最短间隔 | 1.15 秒（攒着排队，最多排 6 坨） |
+| 中途挂载不倒算 | 首次拿到的总量只作基线，不把历史 token 一次性倒出来 |
+| 拿不到 token 数据时 | 兜底每 42 秒自己来一坨 |
+
+token 来源是会话级的 `tokenUsage` 客户端投影（就是输入框底下那条统计胶囊用的同一个数据源），
+通过 `conversation.composer.dock` 里一个不渲染任何东西的桥接组件喂进引擎。
+
+### 动作（2.9 秒一套）
+
+参考实拍：**鼓劲 → 前半身趴低、屁股翘到最高 → 喷出去 → 抖一抖 + 摇几下屁股 → 起身**。
+
+- 趴低只让躯干前倾（`bodyRot`），头和脚留在原地跟着补偿，所以脖子不会被拉长、脚也不离地
+- 尾羽给到 60°（整体前倾会吃掉约 22°，剩下的才是真正翘起来的角度）
+- 翅膀朝后掠（正值 = 顺时针），整体前倾再叠 22°，合成到接近水平偏上
+- 出手那一瞬间有后坐力：身体往前一顿、尾巴甩一下、胸腔鼓起，喷口崩出碎屑
+- 拉完的抖动是**两种频率叠在一起**：慢而大的「摇屁股」+ 快而小的「发抖」，幅度一路指数衰减到停
+- 使劲的时候眼睛眯成一条缝：先睁一下 → 喷出去那下闭紧 → 之后睁开
+
+### 抛物线
+
+出手速度是**反解**出来的，所以每一发都精确落在同一个点上：
+
+```
+vx = dx / T       vy = (dy − gT²/2) / T
+T = clamp(0.20 + |dx| × 0.0013, 0.20, 0.42)   // 滞空只有 0.25 秒左右
+gravity = 2200                                 // 故意给得很大：是「一冲」不是「抛投」
+```
+
+- 重力给大 + 滞空给短 = **喷射感**（0.25 秒 vs 普通抛投的 0.53 秒）
+- 轨迹用**解析解**算（`y = y₀ + vy·t + ½gt²`），不是欧拉积分，所以落点**数学上精确**、不受帧率影响
+- 飞行时把整条抛物线画出来，用**三条同色折线叠出锥度**（根部 4.05px → 中段 2.55px → 前端 1.35px），
+  加一颗小液滴当头 —— 是一股射流，不是一条等宽线
+
+### 堆
+
+- 地上**永远只有一坨**，所有屎都砸在它上面（前缘固定在企鹅身后 60 单位，只往身后长，所以不会贴到身上）
+- 每发 +0.42~1.0px，**越长越大**，封顶 62px（企鹅整只才 68px 宽）
+- **挪窝就清场**：走开超过 14 单位（或把企鹅拖走），旧的那坨直接消失，到新位置从 16px 重新开始
+- 还欠着屎的时候企鹅**不散步**，站着拉完再说
+
+### 彩蛋
+
+| 掉落 | 概率 | 效果 |
+|---|---|---|
+| 🪙 黄金屎 | 1% | 整道弧和整坨变金色 + 呼吸式辉光，**中了就永久挂在堆上** |
+| 🌈 彩虹屎 | 0.1% | 棕色基底走 `hue-rotate` 无限循环变彩虹（优先于黄金） |
+
+两种都会飘一个标签 + 企鹅喊一嗓子。
+
+### 💥 爆炸
+
+**堆到 40 发就炸**：
+
+- 第 29 发开始那一坨**贴地发抖**（预警，同时提亮加饱和）
+- 炸的瞬间：屎堆消失、**46 块碎块**沿 46 个方向冲出去（每块用 slab 法算出这道射线打到屏幕边框的距离，
+  取其中 34%~100% 一段当落点，所以是**铺满整块屏幕**而不是围一小圈）、全屏白光一闪、
+  屎堆位置一圈冲击波、企鹅被吓得跳一下
+- 缓动是 `easeOutCubic`：**一炸就冲出去，然后急停**，糊在屏幕上不动
+- **4.2 秒后自己消失**（留 3 秒 + 淡出 1.2 秒，淡出时一边淡一边缩），不会一直糊着
+
+### 图层
+
+屎和企鹅是**两层**，各自独立挂在 `document.body` 上：
+
+```
+body
+├── <div data-dsh-penguin-poop>   z-index: 9998   ← 弧线 / 屎堆 / 爆炸碎块
+└── <div data-dsh-penguin-pet>    z-index: 9999   ← 企鹅
+```
+
+所以拖企鹅不会拖着屎走，屎也不会被企鹅的层叠上下文牵连。
+
+### 想调手感
+
+全在 `lib/client.js` 顶部的 `POOP` 常量表里：
+
+```js
+actionTime: 2.9       // 一次拉屎动画多长
+fireAt: 0.4           // 喷出去的那一瞬间（占总时长的比例）
+tokensPerPoop: 900    // 多少 token 一坨
+gravity: 2200         // 越大越「冲」
+pileBack: 60          // 屎堆离企鹅多远
+moveClear: 14         // 走多远算「挪窝」清场
+explodeAt: 40         // 堆到几发爆炸
+debrisLife: 3         // 炸完留几秒
+goldChance / rainbowChance   // 彩蛋掉率
+```
+
+---
+
+## 想改企鹅？都在 `lib/client.js` 里
+
+| 找什么 | 位置 |
+|---|---|
+| 造型（每块可动部件是一个 `id="pg-*"` 的 SVG 分组） | `PENGUIN_SVG` |
+| 关节表与姿态表（加新动作就加一行姿态） | `REST` / `POSES` |
+| 手感（弹簧刚度与阻尼，`k` 越大越快、`d` 越小回弹越明显） | `SPRING` |
+| 关节 → SVG transform 的映射（旋转中心都在这） | `poseToParts()` |
+| 行为状态机、走路循环、呼吸、眨眼、视线、跳跃物理 | `createEngine().update()` |
+| 文案（冷知识、动作台词、状态名） | `QUOTES` / `ACTION_WORDS` / `STATUS_TEXT` |
+| 主题配色 | `PENGUIN_TOKENS` |
+| 拉屎与爆炸的全部参数 | `POOP` |
+
+改完保存即可，DSH 的客户端 HMR 会把插件热替换进运行中的界面（无需重启）。
+
+---
+
+## 维护者：怎么发版
+
+仓库里提交的是**构建产物**（`lib/client.js` 本身就是最终 bundle，没有构建步骤），
+所以发版就是「改代码 → 提交 → 打 tag → push」：
+
+```sh
+# 1. 改完代码，先跑离线自测（不需要浏览器）
+node tools/verify-engine.cjs     # 引擎：token -> 抛物线 -> 堆 -> 爆炸
+node tools/verify-dom.cjs        # 渲染层：节点复用、坐标换算、碎块铺屏
+
+# 2. 升 package.json 里的 version，提交
+git commit -am "v1.2.3: ..."
+
+# 3. 打 tag 并推
+git tag v1.2.3
+git push && git push --tags
+```
+
+push tag 之后 GitHub Actions 会自动跑一遍上面两个自测、打包出 tgz、发一个 Release
+（见 `.github/workflows/release.yml`）。别人用方式一装的，`dsh plugin ... update` 就能拿到这次的改动。
+
+本地想手动打包也可以：
+
+```sh
+node tools/pack.mjs              # 产出 dist/dsh-penguin-playground-<version>.tgz
+```
+
+---
+
+## 要求
+
+- 插件在 `package.json` 里声明了 `dsh.client.platform = "web"`，需要 profile 组合里带客户端模块系统
+  （`@deepseek-ai/dsh-base` + web/desktop 应用组合默认都带）
+- 只依赖平台自带的模块：`react`、`react-dom/client` 以及 `dsh.client.inject` 里列出的
+  `@deepseek-ai/dsh-client-runtime` / `-ui-slots` / `-ui-theme`
+- **不需要**任何构建脚本或安装期授权：`lib/client.js` 是已经构建好的客户端产物，安装时不会执行本包的代码
+
+## 已知边界
+
+- 只在 Web 载体（浏览器 / DSH Desktop 的 web profile）里有效；这是纯客户端插件
+- 桌宠挂在 `document.body` 上的独立 portal，屎在另一层（`z-index: 9998`），会浮在侧边栏等面板之上
+- 尊重系统的 `prefers-reduced-motion`：开启后会关掉自主散步/滑行/跳跃等大幅动作
+- 爆炸碎块会短暂盖住整个界面（`pointer-events: none`，不挡点击），4 秒后自动清干净
+
+## 许可
+
+MIT

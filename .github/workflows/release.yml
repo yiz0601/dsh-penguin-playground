@@ -1,0 +1,36 @@
+name: release
+
+# push 一个 v* tag 就自动：跑离线自测 -> 打包 tgz -> 发 Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 离线自测（引擎）
+        run: node tools/verify-engine.cjs
+
+      - name: 离线自测（渲染层）
+        run: node tools/verify-dom.cjs
+
+      - name: 打包
+        run: node tools/pack.mjs
+
+      - name: 发 Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tgz
+          generate_release_notes: true

@@ -1,0 +1,42 @@
+{
+  "name": "dsh-penguin-playground",
+  "version": "1.2.2",
+  "description": "DSH web plugin: penguin playground — a 2D Gentoo penguin desktop pet (side view) animated by a spring-joint engine, plus penguin theme tokens, an input-row easter-egg button, a status dock and a settings section. v1.2 adds projectile-defecation ballistics (tokens burned become poop, aimed into one growing pile that explodes at 40); v1.2.1 reworks that action (body leans forward, flippers swept back, tail up, then a shake), fixes mirrored poses when the pet faces left, and retunes the eye patch; v1.2.2 cancels a pending jump when the action starts, so triggering it mid-hop no longer gets swallowed by the landing.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-theme"
+      ]
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "package.json"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "penguin",
+    "desktop-pet",
+    "web-plugin",
+    "poop",
+    "ballistics"
+  ],
+  "license": "MIT"
+}
