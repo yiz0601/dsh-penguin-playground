@@ -108,8 +108,15 @@ ok('整条弧没有任何文字/表情', !hasText(arcRoot))
   ok('轨迹是先上后下的拱形', apex < ys[0] - 3 && ys[ys.length - 1] > apex + 3,
     'y0=' + ys[0].toFixed(1) + ' apex=' + apex.toFixed(1) + ' yEnd=' + ys[ys.length - 1].toFixed(1))
   const pileScreenX = 300 + eng.pileX * 0.68
-  // 最后一帧离落地还差一步（一帧 ≈ 2.6px），所以允许差一帧的路程
-  ok('弧线一路朝着屎堆推进', pts[pts.length - 1][0] < pts[0][0]
+  // 最后一帧离落地还差一步（一帧 ≈ 2.6px），所以允许差一帧的路程。
+  // 方向不写死左右：v1.4 起模型本体朝左（flip 静止值 -1），堆可能在左也可能在右，
+  // 所以判据是「每一步都朝屎堆推进」+「落点就是屎堆」。
+  const toward = Math.sign(pileScreenX - pts[0][0]) || 1
+  let monotonic = true
+  for (let i = 1; i < pts.length; i++) {
+    if ((pts[i][0] - pts[i - 1][0]) * toward < -0.01) monotonic = false
+  }
+  ok('弧线一路朝着屎堆推进', monotonic
     && Math.abs(pts[pts.length - 1][0] - pileScreenX) < 4,
     'x0=' + pts[0][0] + ' xEnd=' + pts[pts.length - 1][0] + ' pileScreenX=' + pileScreenX.toFixed(1))
 }
@@ -161,9 +168,11 @@ for (let n = 0; n < POOP.explodeAt - 3; n++) {
 ok('堆长胖是往身后长：前缘位置恒定', frontEdges.length > 8
   && frontEdges.every((x) => Math.abs(x - frontEdges[0]) < 0.05),
   'front=' + frontEdges[0].toFixed(2) + ' .. ' + frontEdges[frontEdges.length - 1].toFixed(2))
+// 方向不写死左右：堆在企鹅的「背面」（与 facing 相反一侧），前缘离身体中心至少 pileBack
+const behindPx = (eng.pileX - (50 + eng.anchor)) * 0.68
 ok('前缘在企鹅身后（不会贴到身上）',
-  frontEdges[0] < 300 + (50 + eng.anchor - POOP.pileBack) * 0.68 + 1,
-  'front=' + frontEdges[0].toFixed(1))
+  Math.abs(behindPx) >= POOP.pileBack * 0.68 - 1 && behindPx * eng.facing < 0,
+  'front=' + frontEdges[0].toFixed(1) + ' behind=' + behindPx.toFixed(1) + ' facing=' + eng.facing)
 ok('地上始终只有一个节点', layer.countByClass('dsh-pg-splat') === 1, 'piles=' + layer.countByClass('dsh-pg-splat'))
 ok('那一坨越堆越大', widths[widths.length - 1] > widths[0],
   'first=' + widths[0].toFixed(1) + ' last=' + widths[widths.length - 1].toFixed(1))
