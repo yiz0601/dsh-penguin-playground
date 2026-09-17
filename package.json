@@ -1,7 +1,7 @@
 {
   "name": "dsh-penguin-playground",
-  "version": "1.4.0",
-  "description": "DSH web plugin: penguin playground — a 2D Gentoo penguin desktop pet (side view) animated by a spring-joint engine, plus penguin theme tokens, an input-row easter-egg button, a status dock and a settings section. v1.2 adds projectile-defecation ballistics (tokens burned become poop, aimed into one growing pile that explodes at 40); v1.2.1 reworks that action (body leans forward, flippers swept back, tail up, then a shake), fixes mirrored poses when the pet faces left, and retunes the eye patch; v1.2.2 cancels a pending jump when the action starts, so triggering it mid-hop no longer gets swallowed by the landing; v1.3 adds swimming — the pet submerges below a wavy waterline inside a small animated pool (two scrolling wave layers plus foam), retunes the palette to the values calibrated from the reference vector (neutral black coat, warm white belly, red beak, orange webbed feet with black claws); v1.4 rebuilds the model: a much more detailed side-view skeleton (80 KB of vector art, head / both flippers / tail / both feet as independent groups), a per-part MODULE_TUNING table (offset, rotation, scale and pivot per state) and new joints — sideMix, footLock, wingLift, swimTune and poopTune.",
+  "version": "1.5.0",
+  "description": "DSH web plugin: penguin playground — a 2D penguin desktop pet animated by a spring-joint engine, plus penguin theme tokens, an input-row easter-egg button, a status dock and a settings section. v1.2 adds projectile-defecation ballistics (tokens burned become poop, aimed into one growing pile that explodes at 40); v1.2.1 reworks that action, fixes mirrored poses when facing left, and retunes the eye patch; v1.2.2 cancels a pending jump when the action starts; v1.3 adds swimming — the pet submerges below a wavy waterline inside a small animated pool; v1.4 rebuilds the model (80 KB side-view skeleton, per-part MODULE_TUNING table, new sideMix / footLock / wingLift / swimTune / poopTune joints); v1.5 adds two more species switchable in settings — Adélie (flat all-black crown, thin white eye ring, short dark beak, slim upright body) and Emperor (near-black charcoal coat, yellow teardrop ear patch, pale cream upper breast) — plus reworked flippers with a wide shoulder joint and a continuous back coat, larger eyes and solid triangular call rays.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -36,7 +36,11 @@
     "desktop-pet",
     "web-plugin",
     "poop",
-    "ballistics"
+    "ballistics",
+    "swim",
+    "species",
+    "adelie",
+    "emperor"
   ],
   "license": "MIT"
 }
